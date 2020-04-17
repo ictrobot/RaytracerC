@@ -6,8 +6,9 @@
 
 Image render(int width, int height, double fov, Scene *scene);
 
-#define RAYTRACERC_MULTI
-#ifdef RAYTRACERC_MULTI
+Image renderSingle(int width, int height, double fov, Scene *scene);
+
+#ifdef _RAYTRACERC_PTHREAD
 
 Image renderMulti(int width, int height, double fov, Scene *scene);
 

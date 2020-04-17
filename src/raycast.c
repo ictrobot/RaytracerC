@@ -1,3 +1,6 @@
+#define _USE_MATH_DEFINES
+
+#include <math.h>
 #include "raycast.h"
 
 Vec3 ray_eval(Ray ray, double distance) {

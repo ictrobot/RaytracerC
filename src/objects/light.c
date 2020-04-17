@@ -1,5 +1,7 @@
-#include "light.h"
+#define _USE_MATH_DEFINES
+
 #include <math.h>
+#include "light.h"
 #include <malloc.h>
 
 Light *light_new(Vec3 pos, RGB colour, double intensity) {

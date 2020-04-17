@@ -1,3 +1,6 @@
+#define _USE_MATH_DEFINES
+
+#include <math.h>
 #include "renderer.h"
 #include "camera.h"
 #include <malloc.h>
@@ -92,7 +95,7 @@ static void *renderThread(void *args) {
   return NULL;
 }
 
-Image render(int width, int height, double fov, Scene *scene) {
+Image renderSingle(int width, int height, double fov, Scene *scene) {
   RenderThreadArgs *args = malloc(sizeof(RenderThreadArgs));
   args->threadNumber = 1;
   args->threadCount = 1;
@@ -106,16 +109,18 @@ Image render(int width, int height, double fov, Scene *scene) {
   return image;
 }
 
-#ifdef RAYTRACERC_MULTI
+#ifdef _RAYTRACERC_PTHREAD
 
 #include <pthread.h>
 #include <sys/sysinfo.h>
 
 Image renderMulti(int width, int height, double fov, Scene *scene) {
+  int numThreads = get_nprocs();
+  if (numThreads == 1) return render(width, height, fov, scene);
+
   Image result = img_new(width, height);
   Camera *camera = camera_new(width, height, fov);
 
-  int numThreads = get_nprocs();
   pthread_t *threads = malloc(numThreads * sizeof(pthread_t));
   for (int i = 0; i < numThreads; i++) {
     RenderThreadArgs *args = malloc(sizeof(RenderThreadArgs));
@@ -135,6 +140,16 @@ Image renderMulti(int width, int height, double fov, Scene *scene) {
   free(camera);
 
   return result;
+}
+
+Image render(int width, int height, double fov, Scene *scene) {
+  return renderMulti(width, height, fov, scene);
+}
+
+#else
+
+Image render(int width, int height, double fov, Scene *scene) {
+  return renderSingle(width, height, fov, scene);
 }
 
 #endif

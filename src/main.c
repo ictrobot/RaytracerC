@@ -3,6 +3,6 @@
 
 int main() {
   Scene *scene = scene_make();
-  Image image = renderMulti(1920, 1080, 60, scene);
+  Image image = render(1920, 1080, 60, scene);
   return img_save(image, "test.png");
 }
