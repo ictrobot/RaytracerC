@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include "camera.h"
+#include <malloc.h>
 
 static const double EPSILON = 0.001;
 
@@ -67,15 +68,73 @@ static RGB trace(Scene *scene, Ray ray, int bouncesLeft) {
   }
 }
 
-Image render(int width, int height, double fov, Scene *scene) {
-  Image result = img_new(width, height);
-  Camera *camera = camera_new(width, height, fov);
-  for (int x = 0; x < width; x++) {
-    for (int y = 0; y < height; y++) {
-      Ray ray = camera_cast(camera, x, y);
-      RGB rgb = trace(scene, ray, scene->bounces);
-      img_setPx(result, x, y, rgb);
+typedef struct {
+  int threadNumber;
+  int threadCount;
+
+  Camera *camera;
+  Scene *scene;
+  Image image;
+} RenderThreadArgs;
+
+static void *renderThread(void *args) {
+  RenderThreadArgs *rtArgs = args;
+
+  for (int x = 0; x < rtArgs->image.width; x++) {
+    for (int y = rtArgs->threadNumber; y < rtArgs->image.height; y += rtArgs->threadCount) {
+      Ray ray = camera_cast(rtArgs->camera, x, y);
+      RGB rgb = trace(rtArgs->scene, ray, rtArgs->scene->bounces);
+      img_setPx(rtArgs->image, x, y, rgb);
     }
   }
+
+  free(args);
+  return NULL;
+}
+
+Image render(int width, int height, double fov, Scene *scene) {
+  RenderThreadArgs *args = malloc(sizeof(RenderThreadArgs));
+  args->threadNumber = 1;
+  args->threadCount = 1;
+  args->scene = scene;
+  Camera *camera = args->camera = camera_new(width, height, fov);
+  Image image = args->image = img_new(width, height);
+
+  renderThread(args);
+  free(camera);
+
+  return image;
+}
+
+#ifdef RAYTRACERC_MULTI
+
+#include <pthread.h>
+#include <sys/sysinfo.h>
+
+Image renderMulti(int width, int height, double fov, Scene *scene) {
+  Image result = img_new(width, height);
+  Camera *camera = camera_new(width, height, fov);
+
+  int numThreads = get_nprocs();
+  pthread_t *threads = malloc(numThreads * sizeof(pthread_t));
+  for (int i = 0; i < numThreads; i++) {
+    RenderThreadArgs *args = malloc(sizeof(RenderThreadArgs));
+    args->threadNumber = i;
+    args->threadCount = numThreads;
+    args->camera = camera;
+    args->scene = scene;
+    args->image = result;
+    pthread_create(&threads[i], NULL, renderThread, (void *) args);
+  }
+
+  for (int i = 0; i < numThreads; i++) {
+    pthread_join(threads[i], NULL);
+  }
+
+  free(threads);
+  free(camera);
+
   return result;
 }
+
+#endif

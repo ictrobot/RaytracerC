@@ -4,7 +4,7 @@
 #include "vect/rgb.h"
 
 typedef struct {
-  const int width, height, length;
+  int width, height, length;
   RGB *data;
 } Image;
 
