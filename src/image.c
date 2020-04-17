@@ -1,7 +1,8 @@
 #include "image.h"
-#include <stddef.h>
 #include <malloc.h>
-#include "../lib/libattopng/libattopng.h"
+#include "../lib/lodepng/lodepng.h"
+#include <stdint.h>
+#include <stdio.h>
 
 Image img_new(int width, int height) {
   size_t sizeImageData = sizeof(RGB) * width * height;
@@ -22,18 +23,19 @@ static uint8_t component(double d) {
 }
 
 int img_save(Image image, char *filename) {
-  libattopng_t *png = libattopng_new(image.width, image.height, PNG_RGB);
-  for (int y = 0, i = 0; y < image.height; y++) {
-    for (int x = 0; x < image.width; x++, i++) {
-      RGB rgb = image.data[i];
-      uint8_t r = component(rgb.r);
-      uint8_t g = component(rgb.g);
-      uint8_t b = component(rgb.b);
-      uint32_t packed = r | (g << 8u) | (b << 16u) | (0xFFu < 24u);
-      libattopng_set_pixel(png, x, y, packed);
+  uint8_t *data = malloc(image.length * 3 * sizeof(uint8_t));
+  for (int y = 0, i = 0, r = 0; y < image.height; y++) {
+    for (int x = 0; x < image.width; x++, r++) {
+      RGB rgb = image.data[r];
+      data[i++] = component(rgb.r);
+      data[i++] = component(rgb.g);
+      data[i++] = component(rgb.b);
     }
   }
-  int result = libattopng_save(png, filename);
-  libattopng_destroy(png);
-  return result;
+  unsigned int error = lodepng_encode24_file(filename, data, image.width, image.height);
+  if (error) {
+    printf("Error writing PNG: %u - %s\n", error, lodepng_error_text(error));
+    return (int) error;
+  }
+  return 0;
 }
