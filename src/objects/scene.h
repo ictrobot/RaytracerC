@@ -17,4 +17,6 @@ typedef struct {
 
 Scene *scene_make(void);
 
+void scene_free(Scene *scene);
+
 #endif //RAYTRACERC_SCENE_H

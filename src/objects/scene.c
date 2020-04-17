@@ -26,3 +26,17 @@ Scene *scene_make(void) {
 
   return scene;
 }
+
+void scene_free(Scene *scene) {
+  for (int i = 0; i < scene->lenLight; i++) {
+    free(scene->lights[i]);
+  }
+  free(scene->lights);
+
+  for (int i = 0; i < scene->lenObj; i++) {
+    free(scene->objects[i]);
+  }
+  free(scene->objects);
+
+  free(scene);
+}
