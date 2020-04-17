@@ -1,9 +1,9 @@
 #define _USE_MATH_DEFINES
-
 #include <math.h>
 #include "renderer.h"
 #include "camera.h"
 #include <malloc.h>
+#include "threading/thread.h"
 
 static const double EPSILON = 0.001;
 
@@ -72,84 +72,34 @@ static RGB trace(Scene *scene, Ray ray, int bouncesLeft) {
 }
 
 typedef struct {
-  int threadNumber;
-  int threadCount;
-
+  ThreadArgs thread;
   Camera *camera;
   Scene *scene;
   Image image;
 } RenderThreadArgs;
 
-static void *renderThread(void *args) {
+static void renderThread(void *args) {
   RenderThreadArgs *rtArgs = args;
 
   for (int x = 0; x < rtArgs->image.width; x++) {
-    for (int y = rtArgs->threadNumber; y < rtArgs->image.height; y += rtArgs->threadCount) {
+    for (int y = rtArgs->thread.threadNum; y < rtArgs->image.height; y += rtArgs->thread.threadCount) {
       Ray ray = camera_cast(rtArgs->camera, x, y);
       RGB rgb = trace(rtArgs->scene, ray, rtArgs->scene->bounces);
       img_setPx(rtArgs->image, x, y, rgb);
     }
   }
-
-  free(args);
-  return NULL;
 }
 
-Image renderSingle(int width, int height, double fov, Scene *scene) {
+Image render(int width, int height, double fov, Scene *scene, int maxThreads) {
   RenderThreadArgs *args = malloc(sizeof(RenderThreadArgs));
-  args->threadNumber = 1;
-  args->threadCount = 1;
   args->scene = scene;
-  Camera *camera = args->camera = camera_new(width, height, fov);
+  args->camera = camera_new(width, height, fov);
   Image image = args->image = img_new(width, height);
 
-  renderThread(args);
-  free(camera);
+  threaded_run(renderThread, &args->thread, sizeof(*args), maxThreads);
+
+  free(args->camera);
+  free(args);
 
   return image;
 }
-
-#ifdef _RAYTRACERC_PTHREAD
-
-#include <pthread.h>
-#include <sys/sysinfo.h>
-
-Image renderMulti(int width, int height, double fov, Scene *scene) {
-  int numThreads = get_nprocs();
-  if (numThreads == 1) return render(width, height, fov, scene);
-
-  Image result = img_new(width, height);
-  Camera *camera = camera_new(width, height, fov);
-
-  pthread_t *threads = malloc(numThreads * sizeof(pthread_t));
-  for (int i = 0; i < numThreads; i++) {
-    RenderThreadArgs *args = malloc(sizeof(RenderThreadArgs));
-    args->threadNumber = i;
-    args->threadCount = numThreads;
-    args->camera = camera;
-    args->scene = scene;
-    args->image = result;
-    pthread_create(&threads[i], NULL, renderThread, (void *) args);
-  }
-
-  for (int i = 0; i < numThreads; i++) {
-    pthread_join(threads[i], NULL);
-  }
-
-  free(threads);
-  free(camera);
-
-  return result;
-}
-
-Image render(int width, int height, double fov, Scene *scene) {
-  return renderMulti(width, height, fov, scene);
-}
-
-#else
-
-Image render(int width, int height, double fov, Scene *scene) {
-  return renderSingle(width, height, fov, scene);
-}
-
-#endif
