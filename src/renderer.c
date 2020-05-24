@@ -84,7 +84,7 @@ static RGB traceRay(Scene *scene, Ray ray, RAND *rand) {
       Ray dofRay = (Ray) {origin, vec3_norm(vec3_sub(focalPoint, origin))};
       value = rgb_add(value, trace(scene, dofRay, scene->bounces));
     }
-    return rgb_scaleConst(value, (double) 1 / scene->dofRays);
+    return rgb_scaleConst(value, 1.0 / scene->dofRays);
   }
 }
 
@@ -100,9 +100,34 @@ static void renderThread(void *args) {
 
   for (int x = 0; x < rtArgs->image.width; x++) {
     for (int y = rtArgs->thread.threadNum; y < rtArgs->image.height; y += rtArgs->thread.threadCount) {
-      Ray ray = camera_cast(rtArgs->camera, x, y);
-      RGB rgb = traceRay(rtArgs->scene, ray, &rtArgs->thread.threadRand);
-      img_setPx(rtArgs->image, x, y, rgb);
+      RGB value;
+
+      if (rtArgs->scene->samples == 0) {
+        Ray ray = camera_cast(rtArgs->camera, x, y);
+        value = traceRay(rtArgs->scene, ray, &rtArgs->thread.threadRand);
+      } else {
+        value = rgb_val(0);
+        RAND *rand = &rtArgs->thread.threadRand;
+
+        int jitteredSize = (int) sqrt(rtArgs->scene->samples);
+        for (int iX = 0; iX < jitteredSize; iX++) {
+          double offsetX = (iX + random(rand)) / jitteredSize;
+          for (int iY = 0; iY < jitteredSize; iY++) {
+            double offsetY = (iY + random(rand)) / jitteredSize;
+            Ray ray = camera_cast(rtArgs->camera, x - 0.5 + offsetX, y - 0.5 + offsetY);
+            value = rgb_add(value, traceRay(rtArgs->scene, ray, &rtArgs->thread.threadRand));
+          }
+        }
+
+        int remainingSamples = rtArgs->scene->samples - (jitteredSize * jitteredSize);
+        for (int i = 0; i < remainingSamples; i++) {
+          Ray ray = camera_cast(rtArgs->camera, x - 0.5 + random(rand), y - 0.5 + random(rand));
+          value = rgb_add(value, traceRay(rtArgs->scene, ray, &rtArgs->thread.threadRand));
+        }
+
+        value = rgb_scaleConst(value, 1.0 / rtArgs->scene->samples);
+      }
+      img_setPx(rtArgs->image, x, y, value);
     }
   }
 }

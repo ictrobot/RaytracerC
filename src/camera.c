@@ -25,7 +25,7 @@ Camera *camera_new(int width, int height, double fov) {
   return camera;
 }
 
-Ray camera_cast(Camera *camera, int x, int y) {
+Ray camera_cast(Camera *camera, double x, double y) {
   double x_pos = (camera->x_step_m - camera->width_m) / 2 + x * camera->x_step_m;
   double y_pos = (camera->y_step_m + camera->height_m) / 2 - y * camera->y_step_m;
   return (Ray) {vec3_val(0), vec3_norm(vec3_coords(x_pos, y_pos, 1))};

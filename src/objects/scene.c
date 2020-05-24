@@ -27,6 +27,7 @@ Scene *scene_make(void) {
   // quality settings
   scene->bounces = 3;
   scene->dofRays = 9;
+  scene->samples = 10;
 
   return scene;
 }

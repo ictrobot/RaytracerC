@@ -17,6 +17,7 @@ typedef struct {
   // quality settings
   int bounces;
   int dofRays;
+  int samples;
 } Scene;
 
 Scene *scene_make(void);

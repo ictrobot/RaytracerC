@@ -13,6 +13,6 @@ typedef struct {
 
 Camera *camera_new(int width, int height, double fov);
 
-Ray camera_cast(Camera *camera, int x, int y);
+Ray camera_cast(Camera *camera, double x, double y);
 
 #endif //RAYTRACERC_CAMERA_H
