@@ -1,4 +1,3 @@
-#define _USE_MATH_DEFINES
 #include <math.h>
 #include "renderer.h"
 #include "camera.h"
@@ -16,7 +15,7 @@ static RaycastHit findClosestHit(Scene *scene, Ray ray) {
   return closest;
 }
 
-static RGB illuminate(Scene *scene, Ray ray, RaycastHit hit) {
+static RGB illuminate(Scene *scene, Ray ray, RaycastHit hit, RAND *rand) {
   RGB result = rgb_scale(hit.object->colour, scene->ambientLight);
 
   for (int i = 0; i < scene->lenLight; i++) {
@@ -33,18 +32,27 @@ static RGB illuminate(Scene *scene, Ray ray, RaycastHit hit) {
     double RdotV = vec3_dot(R, V);
     if (NdotL <= 0 && RdotV <= 0) continue;
 
-    Ray shadowRay = (Ray) {vec3_add(hit.location, vec3_scaleConst(L, EPSILON)), L};
-    RaycastHit shadowHit = findClosestHit(scene, shadowRay);
+    int notShadowed = 0;
+    int shadowRays = scene->lightSize > 0 ? scene->shadowRays : 1;
+    for (int c = 0; c < shadowRays; c++) {
+      Vec3 random = vec3_scaleConst(random_sphere(rand), scene->lightSize);
+      Vec3 dir = vec3_norm(vec3_sub(vec3_add(light->pos, random), hit.location));
+      Ray shadowRay = (Ray) {vec3_add(hit.location, vec3_scaleConst(dir, EPSILON)), dir};
+      RaycastHit shadowHit = findClosestHit(scene, shadowRay);
+      if (shadowHit.dist > distanceToLight) notShadowed++;
+    }
 
-    if (shadowHit.dist > distanceToLight) {
+    if (notShadowed > 0) {
+      double shadowRatio = (double) notShadowed / shadowRays;
       if (NdotL > 0) {
-        RGB diffuse = rgb_scaleConst(rgb_scale(rgb_scaleConst(hit.object->colour, hit.object->phong_kD), I), NdotL);
+        RGB diffuse = rgb_scaleConst(rgb_scale(rgb_scaleConst(hit.object->colour, hit.object->phong_kD), I),
+                                     NdotL * shadowRatio);
         result = rgb_add(result, diffuse);
       }
 
       if (RdotV > 0 && hit.object->phong_kS > 0) {
         RGB specular = rgb_scaleConst(rgb_scale(rgb_scaleConst(light->colour, hit.object->phong_kS), I),
-                                      pow(RdotV, hit.object->phong_alpha));
+                                      pow(RdotV, hit.object->phong_alpha) * shadowRatio);
         result = rgb_add(result, specular);
       }
     }
@@ -52,11 +60,11 @@ static RGB illuminate(Scene *scene, Ray ray, RaycastHit hit) {
   return result;
 }
 
-static RGB trace(Scene *scene, Ray ray, int bouncesLeft) {
+static RGB trace(Scene *scene, Ray ray, int bouncesLeft, RAND *rand) {
   RaycastHit hit = findClosestHit(scene, ray);
   if (hit.object == NULL) return scene->backgroundColor;
 
-  RGB directIllumination = illuminate(scene, ray, hit);
+  RGB directIllumination = illuminate(scene, ray, hit, rand);
   if (bouncesLeft <= 0 || hit.object->reflectivity <= 0) {
     return directIllumination;
   } else {
@@ -64,7 +72,7 @@ static RGB trace(Scene *scene, Ray ray, int bouncesLeft) {
 
     Vec3 R = vec3_norm(vec3_reflect(vec3_scaleConst(ray.direction, -1), hit.normal));
     Ray reflectedRay = (Ray) {vec3_add(hit.location, vec3_scaleConst(R, EPSILON)), R};
-    RGB reflectedIllumination = trace(scene, reflectedRay, bouncesLeft - 1);
+    RGB reflectedIllumination = trace(scene, reflectedRay, bouncesLeft - 1, rand);
     reflectedIllumination = rgb_scaleConst(reflectedIllumination, hit.object->reflectivity);
 
     return rgb_add(directIllumination, reflectedIllumination);
@@ -73,7 +81,7 @@ static RGB trace(Scene *scene, Ray ray, int bouncesLeft) {
 
 static RGB traceRay(Scene *scene, Ray ray, RAND *rand) {
   if (scene->dofAmount == 0) {
-    return trace(scene, ray, scene->bounces);
+    return trace(scene, ray, scene->bounces, rand);
   } else {
     Vec3 focalPoint = ray_eval(ray, scene->dofDistance);
     RGB value = rgb_val(0);
@@ -82,7 +90,7 @@ static RGB traceRay(Scene *scene, Ray ray, RAND *rand) {
       origin.x += random_pm(rand) * scene->dofAmount;
       origin.y += random_pm(rand) * scene->dofAmount;
       Ray dofRay = (Ray) {origin, vec3_norm(vec3_sub(focalPoint, origin))};
-      value = rgb_add(value, trace(scene, dofRay, scene->bounces));
+      value = rgb_add(value, trace(scene, dofRay, scene->bounces, rand));
     }
     return rgb_scaleConst(value, 1.0 / scene->dofRays);
   }

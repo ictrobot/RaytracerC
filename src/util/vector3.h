@@ -1,6 +1,8 @@
 #ifndef RAYTRACERC_VECTOR3_H
 #define RAYTRACERC_VECTOR3_H
 
+#define PI 3.14159265358979323846
+
 typedef struct {
   double x;
   double y;

@@ -50,6 +50,7 @@ static uint64_t next(uint64_t *s) {
 #include "random.h"
 #include <time.h>
 #include <stdlib.h>
+#include <math.h>
 
 static uint64_t splitmix64(uint64_t *x) {
   uint64_t z = (*x += 0x9e3779b97f4a7c15);
@@ -75,4 +76,11 @@ double random(RAND *rand) {
 double random_pm(RAND *rand) {
   double d = random(rand);
   return (d * 2) - 1;
+}
+
+Vec3 random_sphere(RAND *rand) {
+  double r = random(rand);
+  double theta = random(rand) * PI;
+  double phi = random(rand) * PI * 2;
+  return vec3_coords(r * sin(theta) * cos(phi), r * sin(theta) * sin(phi), r * cos(theta));
 }

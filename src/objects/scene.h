@@ -12,10 +12,12 @@ typedef struct {
   RGB ambientLight;
   RGB backgroundColor;
   // extra
+  double lightSize;
   double dofAmount;
   double dofDistance;
   // quality settings
   int bounces;
+  int shadowRays;
   int dofRays;
   int samples;
 } Scene;

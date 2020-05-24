@@ -1,11 +1,9 @@
-#define _USE_MATH_DEFINES
-
 #include <math.h>
 #include "camera.h"
 #include <malloc.h>
 
 static inline double rad(double degrees) {
-  return degrees / 180.0 * M_PI;
+  return degrees / 180.0 * PI;
 }
 
 Camera *camera_new(int width, int height, double fov) {

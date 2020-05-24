@@ -21,11 +21,14 @@ Scene *scene_make(void) {
   scene->objects[3] = obj_makePlane(vec3_coords(0.0, -0.10622, 4.68013), rgb_ints(34, 34, 34),
                                     vec3_coords(0, 4.2239089012146, -2.180126190185547));
 
+  scene->lightSize = 0.4;
+
   scene->dofDistance = 4.2;
   scene->dofAmount = 0.1;
 
   // quality settings
   scene->bounces = 3;
+  scene->shadowRays = 4;
   scene->dofRays = 9;
   scene->samples = 10;
 

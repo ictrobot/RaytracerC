@@ -1,5 +1,3 @@
-#define _USE_MATH_DEFINES
-
 #include <math.h>
 #include "light.h"
 #include <malloc.h>
@@ -13,6 +11,6 @@ Light *light_new(Vec3 pos, RGB colour, double intensity) {
 }
 
 RGB light_getIlluminationAt(Light *light, double distance) {
-  double scale = light->intensity / (M_PI * 4 * distance * distance);
+  double scale = light->intensity / (PI * 4 * distance * distance);
   return rgb_scaleConst(light->colour, scale);
 }
