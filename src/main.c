@@ -28,5 +28,6 @@ int main() {
     fprintf(stderr, "Failed to save PNG");
   }
 
+  scene_free(scene);
   return returnCode;
 }

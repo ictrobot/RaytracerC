@@ -1,7 +1,7 @@
 #ifndef RAYTRACERC_RAYCAST_H
 #define RAYTRACERC_RAYCAST_H
 
-#include "vect/vector3.h"
+#include "util/vector3.h"
 #include <stddef.h>
 
 typedef struct {

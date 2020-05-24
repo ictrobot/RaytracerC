@@ -1,8 +1,8 @@
 #ifndef RAYTRACERC_LIGHT_H
 #define RAYTRACERC_LIGHT_H
 
-#include "../vect/vector3.h"
-#include "../vect/rgb.h"
+#include "../util/vector3.h"
+#include "../util/rgb.h"
 
 typedef struct {
   Vec3 pos;

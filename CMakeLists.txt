@@ -14,7 +14,7 @@ ENDIF ()
 
 add_library(lodepng lib/lodepng/lodepng.h lib/lodepng/lodepng.c)
 
-add_executable(RaytracerC src/main.c src/vect/rgb.c src/vect/rgb.h src/vect/vector3.c src/vect/vector3.h src/objects/objects.h src/raycast.c src/raycast.h src/objects/sphere.c src/objects/plane.c src/objects/objects.c src/objects/light.c src/objects/light.h src/camera.c src/camera.h src/image.c src/image.h src/renderer.c src/renderer.h src/objects/scene.c src/objects/scene.h src/threading/thread.c src/threading/thread.h src/threading/pthread.c src/threading/win.c)
+add_executable(RaytracerC src/main.c src/util/rgb.c src/util/rgb.h src/util/vector3.c src/util/vector3.h src/objects/objects.h src/raycast.c src/raycast.h src/objects/sphere.c src/objects/plane.c src/objects/objects.c src/objects/light.c src/objects/light.h src/camera.c src/camera.h src/image.c src/image.h src/renderer.c src/renderer.h src/objects/scene.c src/objects/scene.h src/threading/thread.c src/threading/thread.h src/threading/pthread.c src/threading/win.c src/util/random.c src/util/random.h)
 target_link_libraries(RaytracerC lodepng)
 
 IF (PTHREAD_LIB)

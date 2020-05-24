@@ -23,6 +23,7 @@ void threaded_run(void (*fn) (void *), ThreadArgs *args, int argSize, int maxThr
     memcpy((void *) allArgs[i], (void *) args, argSize);
     allArgs[i]->threadNum = i;
     allArgs[i]->threadCount = numThreads;
+    threaded_init_args(allArgs[i]);
 
     threads[i] = (HANDLE) _beginthread(fn, 0, (void *) allArgs[i]);
   }

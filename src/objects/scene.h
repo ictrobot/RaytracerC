@@ -11,8 +11,12 @@ typedef struct {
   int lenLight;
   RGB ambientLight;
   RGB backgroundColor;
+  // extra
+  double dofAmount;
+  double dofDistance;
   // quality settings
   int bounces;
+  int dofRays;
 } Scene;
 
 Scene *scene_make(void);

@@ -71,6 +71,23 @@ static RGB trace(Scene *scene, Ray ray, int bouncesLeft) {
   }
 }
 
+static RGB traceRay(Scene *scene, Ray ray, RAND *rand) {
+  if (scene->dofAmount == 0) {
+    return trace(scene, ray, scene->bounces);
+  } else {
+    Vec3 focalPoint = ray_eval(ray, scene->dofDistance);
+    RGB value = rgb_val(0);
+    for (int c = 0; c < scene->dofRays; c++) {
+      Vec3 origin = ray.origin;
+      origin.x += random_pm(rand) * scene->dofAmount;
+      origin.y += random_pm(rand) * scene->dofAmount;
+      Ray dofRay = (Ray) {origin, vec3_norm(vec3_sub(focalPoint, origin))};
+      value = rgb_add(value, trace(scene, dofRay, scene->bounces));
+    }
+    return rgb_scaleConst(value, (double) 1 / scene->dofRays);
+  }
+}
+
 typedef struct {
   ThreadArgs thread;
   Camera *camera;
@@ -84,7 +101,7 @@ static void renderThread(void *args) {
   for (int x = 0; x < rtArgs->image.width; x++) {
     for (int y = rtArgs->thread.threadNum; y < rtArgs->image.height; y += rtArgs->thread.threadCount) {
       Ray ray = camera_cast(rtArgs->camera, x, y);
-      RGB rgb = trace(rtArgs->scene, ray, rtArgs->scene->bounces);
+      RGB rgb = traceRay(rtArgs->scene, ray, &rtArgs->thread.threadRand);
       img_setPx(rtArgs->image, x, y, rgb);
     }
   }

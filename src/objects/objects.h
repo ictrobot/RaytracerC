@@ -1,8 +1,8 @@
 #ifndef RAYTRACERC_OBJECTS_H
 #define RAYTRACERC_OBJECTS_H
 
-#include "../vect/rgb.h"
-#include "../vect/vector3.h"
+#include "../util/rgb.h"
+#include "../util/vector3.h"
 #include "../raycast.h"
 
 typedef struct object Object;

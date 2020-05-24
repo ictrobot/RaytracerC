@@ -6,9 +6,14 @@ void threaded_single(void (*fn)(void *), ThreadArgs *args) {
   fn((void *) args);
 }
 
+void threaded_init_args(ThreadArgs *args) {
+  args->threadRand = rand_init();
+}
+
 #ifndef _RAYTRACERC_PTHREAD
 #ifndef _RAYTRACERC_WIN32
 void threaded_run(void (*fn) (void *), ThreadArgs *args, int argSize, int maxThreads) {
+  threaded_init_args(args);
   threaded_single(fn, args);
 }
 #endif

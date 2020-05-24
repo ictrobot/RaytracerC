@@ -1,7 +1,7 @@
 #ifndef RAYTRACERC_IMAGE_H
 #define RAYTRACERC_IMAGE_H
 
-#include "vect/rgb.h"
+#include "util/rgb.h"
 
 typedef struct {
   int width, height, length;
